@@ -29,27 +29,36 @@
     .crosshair {
       position: absolute;
       top: 50%; left: 50%;
-      width: 22px; height: 22px;
+      width: 24px; height: 24px;
       transform: translate(-50%, -50%);
       pointer-events: none;
     }
     .crosshair::before, .crosshair::after {
-      content: ""; position: absolute; background: rgba(255, 255, 255, 0.85);
-      box-shadow: 0 0 2px #000;
+      content: ""; position: absolute; background: rgba(255, 255, 255, 0.9);
+      box-shadow: 0 0 3px #000;
     }
-    .crosshair::before { top: 10px; left: 0; width: 22px; height: 2px; }
-    .crosshair::after { left: 10px; top: 0; width: 2px; height: 22px; }
+    .crosshair::before { top: 11px; left: 0; width: 24px; height: 2px; }
+    .crosshair::after { left: 11px; top: 0; width: 2px; height: 24px; }
 
-    .stats {
-      margin-top: 12px;
-      font-size: 18px;
-      display: flex;
-      justify-content: space-around;
+    .legend-bar {
+      margin-top: 8px;
       width: 96vw;
       max-width: 720px;
       background: #1e1e1e;
-      padding: 12px;
+      padding: 8px 12px;
       border-radius: 8px;
+    }
+    .gradient-strip {
+      height: 14px;
+      width: 100%;
+      border-radius: 4px;
+      border: 1px solid #444;
+      margin-bottom: 6px;
+    }
+    .stats {
+      font-size: 16px;
+      display: flex;
+      justify-content: space-between;
     }
     .controls {
       margin-top: 8px;
@@ -65,24 +74,44 @@
       font-size: 14px;
     }
     .controls input[type="range"] { flex: 1; accent-color: #ff5722; }
+    .btn-row {
+      margin-top: 10px;
+      display: flex;
+      gap: 10px;
+      width: 96vw;
+      max-width: 720px;
+    }
+    button {
+      flex: 1;
+      padding: 14px 12px;
+      font-size: 16px;
+      background: #ff5722;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    button.secondary {
+      background: #2e2e2e;
+      border: 1px solid #555;
+    }
+    button:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
     .status-bar {
       margin-top: 8px;
-      font-size: 13px;
+      font-size: 12px;
       font-family: monospace;
       color: #aaa;
       background: #181818;
       border: 1px solid #333;
-      padding: 8px 12px;
+      padding: 7px 10px;
       border-radius: 6px;
       width: 96vw;
       max-width: 720px;
       text-align: center;
-    }
-    button {
-      margin-top: 12px; padding: 16px 32px; font-size: 18px;
-      background: #ff5722; color: white; border: none;
-      border-radius: 8px; cursor: pointer; font-weight: bold;
-      width: 96vw; max-width: 720px;
     }
   </style>
 </head>
@@ -93,23 +122,31 @@
     <div class="crosshair"></div>
   </div>
   
-  <div class="stats">
-    <span id="minTemp" style="color:#4fc3f7;">Min: -- °C</span>
-    <span id="centerTemp" style="color:#ffb74d; font-weight:bold;">Mitte: -- °C</span>
-    <span id="maxTemp" style="color:#e57373;">Max: -- °C</span>
+  <div class="legend-bar">
+    <div id="gradientStrip" class="gradient-strip"></div>
+    <div class="stats">
+      <span id="minTemp" style="color:#b388ff;">Min: -- °C</span>
+      <span id="centerTemp" style="color:#ffb74d; font-weight:bold;">Mitte: -- °C</span>
+      <span id="maxTemp" style="color:#fff59d;">Max: -- °C</span>
+    </div>
   </div>
 
   <div class="controls">
-    <span>Bildglättung:</span>
-    <input type="range" id="smoothSlider" min="10" max="90" value="45">
+    <span>Glättung:</span>
+    <input type="range" id="smoothSlider" min="15" max="95" value="50">
     <span id="smoothLabel">Mittel</span>
   </div>
+
+  <div class="btn-row">
+    <button id="paletteBtn" class="secondary">Farbe: Ironbow</button>
+    <button id="snapBtn" class="secondary" disabled>Foto speichern</button>
+  </div>
+
+  <button id="connectBtn" style="margin-top:10px; width:96vw; max-width:720px;">Kamera verbinden (WebUSB)</button>
 
   <div id="statusBar" class="status-bar">
     Status: Bereit – Bitte Kamera verbinden
   </div>
-
-  <button id="connectBtn">Kamera verbinden (WebUSB)</button>
 
   <script>
     const canvas = document.getElementById('thermalCanvas');
@@ -117,14 +154,16 @@
     ctx.imageSmoothingEnabled = true;
     ctx.imageSmoothingQuality = 'high';
 
-    // Unsichtbares Roh-Canvas (32x24) für saubere Hochskalierung
     const rawCanvas = document.createElement('canvas');
     rawCanvas.width = 32;
     rawCanvas.height = 24;
     const rawCtx = rawCanvas.getContext('2d');
 
     const connectBtn = document.getElementById('connectBtn');
+    const paletteBtn = document.getElementById('paletteBtn');
+    const snapBtn = document.getElementById('snapBtn');
     const statusBar = document.getElementById('statusBar');
+    const gradientStrip = document.getElementById('gradientStrip');
     const smoothSlider = document.getElementById('smoothSlider');
     const smoothLabel = document.getElementById('smoothLabel');
 
@@ -133,44 +172,101 @@
     let lastFpsTime = performance.now();
     let currentFps = 0;
 
-    // Puffer für zeitliche Glättung
     let smoothedTemps = null;
     let smoothMin = null;
     let smoothMax = null;
+    let lastRawMin = 20;
+    let lastRawMax = 30;
+    let lastCenter = 25;
+
+    const palettes = ['Ironbow', 'Rainbow', 'White-Hot'];
+    let paletteIdx = 0;
+
+    function updateLegendStrip() {
+      const stops = [];
+      for (let i = 0; i <= 20; i++) {
+        const [r, g, b] = mapColor(i / 20);
+        stops.push(`rgb(${r},${g},${b}) ${i * 5}%`);
+      }
+      gradientStrip.style.background = `linear-gradient(to right, ${stops.join(', ')})`;
+    }
+
+    paletteBtn.addEventListener('click', () => {
+      paletteIdx = (paletteIdx + 1) % palettes.length;
+      paletteBtn.innerText = `Farbe: ${palettes.at(paletteIdx)}`;
+      updateLegendStrip();
+    });
 
     smoothSlider.addEventListener('input', () => {
       const v = Number(smoothSlider.value);
-      if (v < 30) smoothLabel.innerText = 'Stark';
-      else if (v < 65) smoothLabel.innerText = 'Mittel';
+      if (v < 35) smoothLabel.innerText = 'Stark';
+      else if (v < 70) smoothLabel.innerText = 'Mittel';
       else smoothLabel.innerText = 'Direkt';
     });
 
-    function tempToColor(val, min, max) {
-      let ratio = (val - min) / (max - min || 1);
+    // Farbpaletten-Berechnung (ratio 0.0 bis 1.0)
+    function mapColor(ratio) {
       ratio = Math.max(0, Math.min(1, ratio));
-      let r = Math.min(255, Math.max(0, 255 * (1.5 - Math.abs(4 * ratio - 3))));
-      let g = Math.min(255, Math.max(0, 255 * (1.5 - Math.abs(4 * ratio - 2))));
-      let b = Math.min(255, Math.max(0, 255 * (1.5 - Math.abs(4 * ratio - 1))));
+      const mode = palettes.at(paletteIdx);
+
+      if (mode === 'White-Hot') {
+        const v = Math.round(ratio * 255);
+        return [v, v, v];
+      }
+
+      if (mode === 'Rainbow') {
+        const r = Math.min(255, Math.max(0, Math.round(255 * (1.5 - Math.abs(4 * ratio - 3)))));
+        const g = Math.min(255, Math.max(0, Math.round(255 * (1.5 - Math.abs(4 * ratio - 2)))));
+        const b = Math.min(255, Math.max(0, Math.round(255 * (1.5 - Math.abs(4 * ratio - 1)))));
+        return [r, g, b];
+      }
+
+      // Ironbow (FLIR-Stil: Schwarz -> Violett -> Magenta/Rot -> Orange -> Gelb -> Weiß)
+      let r = 0, g = 0, b = 0;
+      if (ratio < 0.2) {
+        const t = ratio / 0.2;
+        r = Math.round(t * 75);
+        g = 0;
+        b = Math.round(t * 130);
+      } else if (ratio < 0.45) {
+        const t = (ratio - 0.2) / 0.25;
+        r = Math.round(75 + t * 145);
+        g = Math.round(t * 20);
+        b = Math.round(130 - t * 40);
+      } else if (ratio < 0.7) {
+        const t = (ratio - 0.45) / 0.25;
+        r = Math.round(220 + t * 35);
+        g = Math.round(20 + t * 120);
+        b = Math.round(90 - t * 90);
+      } else if (ratio < 0.9) {
+        const t = (ratio - 0.7) / 0.2;
+        r = 255;
+        g = Math.round(140 + t * 115);
+        b = Math.round(t * 80);
+      } else {
+        const t = (ratio - 0.9) / 0.1;
+        r = 255;
+        g = 255;
+        b = Math.round(80 + t * 175);
+      }
       return [r, g, b];
     }
 
-    function drawFrame(temps) {
-      const alpha = Number(smoothSlider.value) / 100; // Mischfaktor neues Bild
+    updateLegendStrip();
 
-      if (!smoothedTemps) {
-        smoothedTemps = new Float32Array(temps);
-      }
+    function drawFrame(temps) {
+      const alpha = Number(smoothSlider.value) / 100;
+      if (!smoothedTemps) smoothedTemps = new Float32Array(temps);
 
       let rawMin = Infinity, rawMax = -Infinity;
       let validPixels = 0;
       let zeroPixels = 0;
 
       for (let i = 0; i < 768; i++) {
-        let t = temps.at(i);
+        const t = temps.at(i);
         if (t === 0) zeroPixels++;
         if (!isNaN(t) && t > -40 && t < 300) {
           validPixels++;
-          // Zeitliche Glättung pro Pixel gegen Schachbrett-Flimmern
           const prev = smoothedTemps.at(i);
           const next = prev + alpha * (t - prev);
           smoothedTemps.set([next], i);
@@ -180,23 +276,25 @@
         }
       }
 
-      // Mindest-Kontrastfenster von 3.5 °C erzwingen (verhindert Farb-Pumpen)
-      if (rawMax - rawMin < 3.5) {
-        const mid = (rawMax + rawMin) / 2;
-        rawMin = mid - 1.75;
-        rawMax = mid + 1.75;
+            lastRawMin = rawMin;
+      lastRawMax = rawMax;
+
+      let scaleMin = rawMin;
+      let scaleMax = rawMax;
+      if (scaleMax - scaleMin < 3.0) {
+        const mid = (scaleMax + scaleMin) / 2;
+        scaleMin = mid - 1.5;
+        scaleMax = mid + 1.5;
       }
 
-      // Farbskala selbst weich nachführen
       if (smoothMin === null) {
-        smoothMin = rawMin;
-        smoothMax = rawMax;
+        smoothMin = scaleMin;
+        smoothMax = scaleMax;
       } else {
-        smoothMin += 0.25 * (rawMin - smoothMin);
-        smoothMax += 0.25 * (rawMax - smoothMax);
+        smoothMin += 0.25 * (scaleMin - smoothMin);
+        smoothMax += 0.25 * (scaleMax - smoothMax);
       }
 
-      // FPS berechnen
       frameCount++;
       const now = performance.now();
       if (now - lastFpsTime >= 1000) {
@@ -213,29 +311,84 @@
         statusBar.innerText = `WARNUNG | Gültig: ${validPixels}/768 | Nullen: ${zeroPixels} | ${currentFps} FPS`;
       }
 
-      const centerVal = smoothedTemps.at(12 * 32 + 16);
+      lastCenter = smoothedTemps.at(12 * 32 + 16);
       document.getElementById('minTemp').innerText = `Min: ${rawMin.toFixed(1)} °C`;
-      document.getElementById('centerTemp').innerText = `Mitte: ${centerVal.toFixed(1)} °C`;
+      document.getElementById('centerTemp').innerText = `Mitte: ${lastCenter.toFixed(1)} °C`;
       document.getElementById('maxTemp').innerText = `Max: ${rawMax.toFixed(1)} °C`;
 
       const imgData = rawCtx.createImageData(32, 24);
       for (let i = 0; i < 768; i++) {
-        let x = 31 - (i % 32);
-        let y = Math.floor(i / 32);
-        let targetIdx = (y * 32 + x) * 4;
+        const x = 31 - (i % 32);
+        const y = Math.floor(i / 32);
+        const targetIdx = (y * 32 + x) * 4;
+        const ratio = (smoothedTemps.at(i) - smoothMin) / (smoothMax - smoothMin || 1);
 
-        let [r, g, b] = tempToColor(smoothedTemps.at(i), smoothMin, smoothMax);
-        imgData.data[targetIdx] = r;
-        imgData.data[targetIdx + 1] = g;
-        imgData.data[targetIdx + 2] = b;
-        imgData.data[targetIdx + 3] = 255;
+        const [r, g, b] = mapColor(ratio);
+        imgData.data.set([r, g, b, 255], targetIdx);
       }
       rawCtx.putImageData(imgData, 0, 0);
 
-      // Weich hochskaliert auf das Haupt-Canvas zeichnen
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.drawImage(rawCanvas, 0, 0, canvas.width, canvas.height);
     }
+
+    // Schnappschuss inkl. Fadenkreuz & Temperatur-Legende exportieren
+    snapBtn.addEventListener('click', () => {
+      const exportCanvas = document.createElement('canvas');
+      exportCanvas.width = 640;
+      exportCanvas.height = 560;
+      const eCtx = exportCanvas.getContext('2d');
+
+      eCtx.imageSmoothingEnabled = true;
+      eCtx.imageSmoothingQuality = 'high';
+      eCtx.drawImage(rawCanvas, 0, 0, 640, 480);
+
+      eCtx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
+      eCtx.lineWidth = 2;
+      eCtx.beginPath();
+      eCtx.moveTo(306, 240); eCtx.lineTo(334, 240);
+      eCtx.moveTo(320, 226); eCtx.lineTo(320, 254);
+      eCtx.stroke();
+
+      const nowStr = new Date().toLocaleString('de-DE');
+      eCtx.fillStyle = 'rgba(0, 0, 0, 0.55)';
+      eCtx.fillRect(10, 10, 185, 26);
+      eCtx.fillStyle = '#fff';
+      eCtx.font = '14px sans-serif';
+      eCtx.fillText(nowStr, 18, 28);
+
+      eCtx.fillStyle = '#181818';
+      eCtx.fillRect(0, 480, 640, 80);
+
+      const grad = eCtx.createLinearGradient(20, 0, 620, 0);
+      for (let i = 0; i <= 20; i++) {
+        const [r, g, b] = mapColor(i / 20);
+        grad.addColorStop(i / 20, `rgb(${r},${g},${b})`);
+      }
+      eCtx.fillStyle = grad;
+      eCtx.fillRect(20, 494, 600, 20);
+      eCtx.strokeStyle = '#555';
+      eCtx.strokeRect(20, 494, 600, 20);
+
+      eCtx.font = 'bold 18px sans-serif';
+      eCtx.fillStyle = '#b388ff';
+      eCtx.textAlign = 'left';
+      eCtx.fillText(`Min: ${lastRawMin.toFixed(1)} °C`, 20, 542);
+
+      eCtx.fillStyle = '#ffb74d';
+      eCtx.textAlign = 'center';
+      eCtx.fillText(`Mitte: ${lastCenter.toFixed(1)} °C`, 320, 542);
+
+      eCtx.fillStyle = '#fff59d';
+      eCtx.textAlign = 'right';
+      eCtx.fillText(`Max: ${lastRawMax.toFixed(1)} °C`, 620, 542);
+
+      const link = document.createElement('a');
+      const fileStamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+      link.download = `Waermebild_${fileStamp}.png`;
+      link.href = exportCanvas.toDataURL('image/png');
+      link.click();
+    });
 
     connectBtn.addEventListener('click', async () => {
       try {
@@ -260,6 +413,7 @@
         });
 
         connectBtn.style.display = 'none';
+        snapBtn.disabled = false;
         statusBar.innerText = 'Status: Verbunden – Warte auf erstes Bild...';
         readLoop(epIn);
       } catch (err) {
