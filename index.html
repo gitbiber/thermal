@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pico 2 Wärmebildkamera</title>
+  <style>
+    body {
+      background: #121212; color: #fff; font-family: sans-serif;
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: center; height: 100vh; margin: 0;
+    }
+    canvas {
+      width: 90vw; max-width: 640px; aspect-ratio: 4 / 3;
+      border: 2px solid #444; border-radius: 8px;
+      image-rendering: auto; background: #000;
+    }
+    button {
+      margin-top: 20px; padding: 14px 28px; font-size: 18px;
+      background: #ff5722; color: white; border: none;
+      border-radius: 8px; cursor: pointer; font-weight: bold;
+    }
+    .stats { margin-top: 15px; font-size: 18px; display: flex; gap: 25px; }
+  </style>
+</head>
+<body>
+
+  <canvas id="thermalCanvas" width="32" height="24"></canvas>
+  
+  <div class="stats">
+    <span id="minTemp">Min: -- °C</span>
+    <span id="centerTemp" style="color:#ff9800; font-weight:bold;">Mitte: -- °C</span>
+    <span id="maxTemp">Max: -- °C</span>
+  </div>
+
+  <button id="connectBtn">Kamera verbinden (WebUSB)</button>
+
+  <script>
+    const canvas = document.getElementById('thermalCanvas');
+    const ctx = canvas.getContext('2d');
+    const connectBtn = document.getElementById('connectBtn');
+    let device;
+
+    function tempToColor(val, min, max) {
+      let ratio = (val - min) / (max - min || 1);
+      ratio = Math.max(0, Math.min(1, ratio));
+      let r = Math.min(255, Math.max(0, 255 * (1.5 - Math.abs(4 * ratio - 3))));
+      let g = Math.min(255, Math.max(0, 255 * (1.5 - Math.abs(4 * ratio - 2))));
+      let b = Math.min(255, Math.max(0, 255 * (1.5 - Math.abs(4 * ratio - 1))));
+      return [r, g, b];
+    }
+
+    function drawFrame(temps) {
+      let min = Infinity, max = -Infinity;
+      for (let t of temps) {
+        if (t < min) min = t;
+        if (t > max) max = t;
+      }
+
+      document.getElementById('minTemp').innerText = `Min: ${min.toFixed(1)} °C`;
+      document.getElementById('centerTemp').innerText = `Mitte: ${temps[12 * 32 + 16].toFixed(1)} °C`;
+      document.getElementById('maxTemp').innerText = `Max: ${max.toFixed(1)} °C`;
+
+      const imgData = ctx.createImageData(32, 24);
+      for (let i = 0; i < 768; i++) {
+        let x = 31 - (i % 32);
+        let y = Math.floor(i / 32);
+        let targetIdx = (y * 32 + x) * 4;
+
+        let [r, g, b] = tempToColor(temps[i], min, max);
+        imgData.data[targetIdx] = r;
+        imgData.data[targetIdx + 1] = g;
+        imgData.data[targetIdx + 2] = b;
+        imgData.data[targetIdx + 3] = 255;
+      }
+      ctx.putImageData(imgData, 0, 0);
+    }
+
+    connectBtn.addEventListener('click', async () => {
+      try {
+        device = await navigator.usb.requestDevice({ filters: [] });
+        await device.open();
+        await device.selectConfiguration(1);
+        
+        const iface = device.configuration.interfaces.find(i => i.alternates[0].interfaceClass === 255);
+        await device.claimInterface(iface.interfaceNumber);
+        const epIn = iface.alternates[0].endpoints.find(e => e.direction === 'in').endpointNumber;
+
+        await device.controlTransferOut({
+          requestType: 'class', recipient: 'interface',
+          request: 0x22, value: 0x01, index: iface.interfaceNumber
+        });
+
+        connectBtn.style.display = 'none';
+        readLoop(epIn);
+      } catch (err) {
+        alert("Fehler: " + err.message);
+      }
+    });
+
+    async function readLoop(epIn) {
+      let buffer = new Uint8Array(0);
+      const FRAME_BYTES = 2 + 768 * 4; // 3074 Bytes pro Bild
+
+      while (device.opened) {
+        const result = await device.transferIn(epIn, 4096);
+        if (result.data && result.data.byteLength > 0) {
+          const chunk = new Uint8Array(result.data.buffer);
+          const combined = new Uint8Array(buffer.length + chunk.length);
+          combined.set(buffer);
+          combined.set(chunk, buffer.length);
+          buffer = combined;
+
+          while (buffer.length >= FRAME_BYTES) {
+            if (buffer[0] === 0xAA && buffer[1] === 0x55) {
+              const frameBytes = buffer.slice(2, FRAME_BYTES);
+              const temps = new Float32Array(frameBytes.buffer);
+              drawFrame(temps);
+              buffer = buffer.slice(FRAME_BYTES);
+            } else {
+              buffer = buffer.slice(1);
+            }
+          }
+        }
+      }
+    }
+  </script>
+</body>
+</html>
