@@ -56,7 +56,7 @@
       margin-bottom: 6px;
     }
     .stats {
-      font-size: 16px;
+      font-size: 15px;
       display: flex;
       justify-content: space-between;
     }
@@ -75,16 +75,16 @@
     }
     .controls input[type="range"] { flex: 1; accent-color: #ff5722; }
     .btn-row {
-      margin-top: 10px;
+      margin-top: 8px;
       display: flex;
-      gap: 10px;
+      gap: 8px;
       width: 96vw;
       max-width: 720px;
     }
     button {
       flex: 1;
-      padding: 14px 12px;
-      font-size: 16px;
+      padding: 13px 10px;
+      font-size: 15px;
       background: #ff5722;
       color: white;
       border: none;
@@ -95,6 +95,10 @@
     button.secondary {
       background: #2e2e2e;
       border: 1px solid #555;
+    }
+    button.active-mode {
+      background: #2e7d32;
+      border: 1px solid #66bb6a;
     }
     button:disabled {
       opacity: 0.4;
@@ -133,16 +137,17 @@
 
   <div class="controls">
     <span>Glättung:</span>
-    <input type="range" id="smoothSlider" min="15" max="95" value="50">
+    <input type="range" id="smoothSlider" min="15" max="95" value="40">
     <span id="smoothLabel">Mittel</span>
   </div>
 
   <div class="btn-row">
+    <button id="scaleBtn" class="secondary">Skala: Auto</button>
     <button id="paletteBtn" class="secondary">Farbe: Ironbow</button>
-    <button id="snapBtn" class="secondary" disabled>Foto speichern</button>
+    <button id="snapBtn" class="secondary" disabled>Foto</button>
   </div>
 
-  <button id="connectBtn" style="margin-top:10px; width:96vw; max-width:720px;">Kamera verbinden (WebUSB)</button>
+  <button id="connectBtn" style="margin-top:8px; width:96vw; max-width:720px;">Kamera verbinden (WebUSB)</button>
 
   <div id="statusBar" class="status-bar">
     Status: Bereit – Bitte Kamera verbinden
@@ -160,6 +165,7 @@
     const rawCtx = rawCanvas.getContext('2d');
 
     const connectBtn = document.getElementById('connectBtn');
+    const scaleBtn = document.getElementById('scaleBtn');
     const paletteBtn = document.getElementById('paletteBtn');
     const snapBtn = document.getElementById('snapBtn');
     const statusBar = document.getElementById('statusBar');
@@ -175,9 +181,24 @@
     let smoothedTemps = null;
     let smoothMin = null;
     let smoothMax = null;
-    let lastRawMin = 20;
-    let lastRawMax = 30;
-    let lastCenter = 25;
+    let lastDispMin = 0;
+    let lastDispMax = 20;
+    let lastCenter = 10;
+
+    // Skalen-Modus: false = Auto, true = Igel-Modus (fest 0°C bis 20°C)
+    let hedgehogMode = false;
+
+    scaleBtn.addEventListener('click', () => {
+      hedgehogMode = !hedgehogMode;
+      if (hedgehogMode) {
+        scaleBtn.innerText = 'Igel (0–20°)';
+        scaleBtn.classList.add('active-mode');
+      } else {
+        scaleBtn.innerText = 'Skala: Auto';
+        scaleBtn.classList.remove('active-mode');
+        smoothMin = null; // Auto-Skala frisch starten
+      }
+    });
 
     const palettes = ['Ironbow', 'Rainbow', 'White-Hot'];
     let paletteIdx = 0;
@@ -204,7 +225,6 @@
       else smoothLabel.innerText = 'Direkt';
     });
 
-    // Farbpaletten-Berechnung (ratio 0.0 bis 1.0)
     function mapColor(ratio) {
       ratio = Math.max(0, Math.min(1, ratio));
       const mode = palettes.at(paletteIdx);
@@ -221,7 +241,7 @@
         return [r, g, b];
       }
 
-      // Ironbow (FLIR-Stil: Schwarz -> Violett -> Magenta/Rot -> Orange -> Gelb -> Weiß)
+      // Ironbow
       let r = 0, g = 0, b = 0;
       if (ratio < 0.2) {
         const t = ratio / 0.2;
@@ -253,7 +273,6 @@
     }
 
     updateLegendStrip();
-
     function drawFrame(temps) {
       const alpha = Number(smoothSlider.value) / 100;
       if (!smoothedTemps) smoothedTemps = new Float32Array(temps);
@@ -276,23 +295,29 @@
         }
       }
 
-            lastRawMin = rawMin;
-      lastRawMax = rawMax;
-
-      let scaleMin = rawMin;
-      let scaleMax = rawMax;
-      if (scaleMax - scaleMin < 3.0) {
-        const mid = (scaleMax + scaleMin) / 2;
-        scaleMin = mid - 1.5;
-        scaleMax = mid + 1.5;
-      }
-
-      if (smoothMin === null) {
-        smoothMin = scaleMin;
-        smoothMax = scaleMax;
+      if (hedgehogMode) {
+        // Feste Skala für Jungigel-Suche bei 0 °C (kein Hintergrund-Pumpen)
+        smoothMin = 0.0;
+        smoothMax = 20.0;
+        lastDispMin = 0.0;
+        lastDispMax = 20.0;
       } else {
-        smoothMin += 0.25 * (scaleMin - smoothMin);
-        smoothMax += 0.25 * (scaleMax - smoothMax);
+        lastDispMin = rawMin;
+        lastDispMax = rawMax;
+        let scaleMin = rawMin;
+        let scaleMax = rawMax;
+        if (scaleMax - scaleMin < 3.0) {
+          const mid = (scaleMax + scaleMin) / 2;
+          scaleMin = mid - 1.5;
+          scaleMax = mid + 1.5;
+        }
+        if (smoothMin === null) {
+          smoothMin = scaleMin;
+          smoothMax = scaleMax;
+        } else {
+          smoothMin += 0.25 * (scaleMin - smoothMin);
+          smoothMax += 0.25 * (scaleMax - smoothMax);
+        }
       }
 
       frameCount++;
@@ -305,16 +330,22 @@
 
       if (validPixels === 768 && zeroPixels === 0) {
         statusBar.style.color = '#81c784';
-        statusBar.innerText = `OK | Pixel: ${validPixels}/768 | Nullen: 0 | ${currentFps} FPS`;
+        statusBar.innerText = `OK | Pixel: ${validPixels}/768 | Max im Bild: ${rawMax.toFixed(1)}°C | ${currentFps} FPS`;
       } else {
         statusBar.style.color = '#ffb74d';
         statusBar.innerText = `WARNUNG | Gültig: ${validPixels}/768 | Nullen: ${zeroPixels} | ${currentFps} FPS`;
       }
 
       lastCenter = smoothedTemps.at(12 * 32 + 16);
-      document.getElementById('minTemp').innerText = `Min: ${rawMin.toFixed(1)} °C`;
-      document.getElementById('centerTemp').innerText = `Mitte: ${lastCenter.toFixed(1)} °C`;
-      document.getElementById('maxTemp').innerText = `Max: ${rawMax.toFixed(1)} °C`;
+      if (hedgehogMode) {
+        document.getElementById('minTemp').innerText = `Skala: 0.0 °C`;
+        document.getElementById('centerTemp').innerText = `Mitte: ${lastCenter.toFixed(1)} °C`;
+        document.getElementById('maxTemp').innerText = `Skala: 20.0 °C`;
+      } else {
+        document.getElementById('minTemp').innerText = `Min: ${rawMin.toFixed(1)} °C`;
+        document.getElementById('centerTemp').innerText = `Mitte: ${lastCenter.toFixed(1)} °C`;
+        document.getElementById('maxTemp').innerText = `Max: ${rawMax.toFixed(1)} °C`;
+      }
 
       const imgData = rawCtx.createImageData(32, 24);
       for (let i = 0; i < 768; i++) {
@@ -332,7 +363,6 @@
       ctx.drawImage(rawCanvas, 0, 0, canvas.width, canvas.height);
     }
 
-    // Schnappschuss inkl. Fadenkreuz & Temperatur-Legende exportieren
     snapBtn.addEventListener('click', () => {
       const exportCanvas = document.createElement('canvas');
       exportCanvas.width = 640;
@@ -373,7 +403,7 @@
       eCtx.font = 'bold 18px sans-serif';
       eCtx.fillStyle = '#b388ff';
       eCtx.textAlign = 'left';
-      eCtx.fillText(`Min: ${lastRawMin.toFixed(1)} °C`, 20, 542);
+      eCtx.fillText(`Min: ${lastDispMin.toFixed(1)} °C`, 20, 542);
 
       eCtx.fillStyle = '#ffb74d';
       eCtx.textAlign = 'center';
@@ -381,7 +411,7 @@
 
       eCtx.fillStyle = '#fff59d';
       eCtx.textAlign = 'right';
-      eCtx.fillText(`Max: ${lastRawMax.toFixed(1)} °C`, 620, 542);
+      eCtx.fillText(`Max: ${lastDispMax.toFixed(1)} °C`, 620, 542);
 
       const link = document.createElement('a');
       const fileStamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
@@ -399,17 +429,26 @@
         await device.open();
         await device.selectConfiguration(1);
         
-        const iface = device.configuration.interfaces.find(
-          i => i.alternates.at(0).interfaceClass === 255
-        );
-        await device.claimInterface(iface.interfaceNumber);
-        const epIn = iface.alternates.at(0).endpoints.find(
+        let claimedIface = null;
+        for (const iface of device.configuration.interfaces) {
+          if (iface.alternates.at(0).interfaceClass === 255) {
+            try {
+              await device.claimInterface(iface.interfaceNumber);
+              claimedIface = iface;
+              break;
+            } catch (e) {}
+          }
+        }
+        if (!claimedIface) {
+          throw new Error("USB-Interface belegt (Kabel kurz abziehen!).");
+        }
+        const epIn = claimedIface.alternates.at(0).endpoints.find(
           e => e.direction === 'in'
         ).endpointNumber;
 
         await device.controlTransferOut({
           requestType: 'class', recipient: 'interface',
-          request: 0x22, value: 0x01, index: iface.interfaceNumber
+          request: 0x22, value: 0x01, index: claimedIface.interfaceNumber
         });
 
         connectBtn.style.display = 'none';
