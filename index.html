@@ -46,7 +46,7 @@
     #deltaBox input[type="range"] { flex: 1; accent-color: #42a5f5; }
 
     .btn-row { margin-top: 8px; display: flex; gap: 8px; width: 96vw; max-width: 720px; }
-    button { flex: 1; padding: 13px 10px; font-size: 15px; background: #ff5722;
+    button { flex: 1; padding: 18px 10px; font-size: 16px; background: #ff5722;
       color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
     button.secondary { background: #2e2e2e; border: 1px solid #555; }
     button.active-mode { background: #2e7d32; border: 1px solid #66bb6a; }
@@ -89,8 +89,8 @@
 
   <div id="deltaBox" class="scale-box">
     <span>Empfindlichkeit: ±</span>
-    <input type="range" id="deltaSlider" min="3" max="25" value="8">
-    <span id="deltaLabel">8 °C</span>
+    <input type="range" id="deltaSlider" min="3" max="25" value="10">
+    <span id="deltaLabel">10 °C</span>
   </div>
 
   <div class="btn-row">
@@ -161,8 +161,8 @@
   let lastCenter = 15;
 
   const scaleModes = ['auto', 'delta', 'fixed'];
-  let scaleMode = 'auto';
-  let deltaGain = 8;
+  let scaleMode = 'delta';
+  let deltaGain = 10;
 
   // ============================================================
   // Farbpaletten
@@ -240,6 +240,9 @@
     deltaLabel.innerText = deltaGain + ' °C';
     smoothMin = null;
   });
+
+  // Beim Laden direkt in Delta-Modus starten
+  updateScaleUI();
 
   // ============================================================
   // Glättungs-Slider
