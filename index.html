@@ -11,137 +11,50 @@
       display: flex; flex-direction: column; align-items: center;
       justify-content: center; min-height: 100vh; margin: 0; padding: 10px;
     }
-    .viewer {
-      position: relative;
-      width: 96vw;
-      max-width: 720px;
-      aspect-ratio: 4 / 3;
-      border: 2px solid #444;
-      border-radius: 10px;
-      overflow: hidden;
-      background: #000;
-    }
-    canvas {
-      width: 100%;
-      height: 100%;
-      display: block;
-    }
-    .crosshair {
-      position: absolute;
-      top: 50%; left: 50%;
-      width: 24px; height: 24px;
-      transform: translate(-50%, -50%);
-      pointer-events: none;
-    }
-    .crosshair::before, .crosshair::after {
-      content: ""; position: absolute; background: rgba(255, 255, 255, 0.9);
-      box-shadow: 0 0 3px #000;
-    }
+    .viewer { position: relative; width: 96vw; max-width: 720px;
+      aspect-ratio: 4 / 3; border: 2px solid #444; border-radius: 10px;
+      overflow: hidden; background: #000; }
+    canvas { width: 100%; height: 100%; display: block; }
+    .crosshair { position: absolute; top: 50%; left: 50%; width: 24px; height: 24px;
+      transform: translate(-50%, -50%); pointer-events: none; }
+    .crosshair::before, .crosshair::after { content: ""; position: absolute;
+      background: rgba(255,255,255,0.9); box-shadow: 0 0 3px #000; }
     .crosshair::before { top: 11px; left: 0; width: 24px; height: 2px; }
-    .crosshair::after { left: 11px; top: 0; width: 2px; height: 24px; }
+    .crosshair::after  { left: 11px; top: 0; width: 2px; height: 24px; }
 
-    .legend-bar {
-      margin-top: 8px;
-      width: 96vw;
-      max-width: 720px;
-      background: #1e1e1e;
-      padding: 8px 12px;
-      border-radius: 8px;
-    }
-    .gradient-strip {
-      height: 14px;
-      width: 100%;
-      border-radius: 4px;
-      border: 1px solid #444;
-      margin-bottom: 6px;
-    }
-    .stats {
-      font-size: 15px;
-      display: flex;
-      justify-content: space-between;
-    }
-    .controls {
-      margin-top: 8px;
-      display: flex;
-      gap: 10px;
-      width: 96vw;
-      max-width: 720px;
-      align-items: center;
-      justify-content: space-between;
-      background: #1e1e1e;
-      padding: 10px 14px;
-      border-radius: 8px;
-      font-size: 14px;
-    }
+    .legend-bar { margin-top: 8px; width: 96vw; max-width: 720px;
+      background: #1e1e1e; padding: 8px 12px; border-radius: 8px; }
+    .gradient-strip { height: 14px; width: 100%; border-radius: 4px;
+      border: 1px solid #444; margin-bottom: 6px; }
+    .stats { font-size: 15px; display: flex; justify-content: space-between; }
+
+    .controls { margin-top: 8px; display: flex; gap: 10px; width: 96vw;
+      max-width: 720px; align-items: center; justify-content: space-between;
+      background: #1e1e1e; padding: 10px 14px; border-radius: 8px; font-size: 14px; }
     .controls input[type="range"] { flex: 1; accent-color: #ff5722; }
-    .scale-box {
-      margin-top: 8px;
-      display: none;
-      gap: 10px;
-      width: 96vw;
-      max-width: 720px;
-      align-items: center;
-      justify-content: center;
-      background: #1b2e1e;
-      border: 1px solid #4caf50;
-      padding: 8px 12px;
-      border-radius: 8px;
-      font-size: 14px;
-    }
+
+    .scale-box { margin-top: 8px; display: none; gap: 10px; width: 96vw;
+      max-width: 720px; align-items: center; justify-content: center;
+      background: #1b2e1e; border: 1px solid #4caf50;
+      padding: 8px 12px; border-radius: 8px; font-size: 14px; }
     .scale-box input[type="number"] {
-      width: 68px;
-      padding: 6px;
-      font-size: 16px;
-      font-weight: bold;
-      text-align: center;
-      background: #121212;
-      color: #fff;
-      border: 1px solid #66bb6a;
-      border-radius: 6px;
-    }
-    .btn-row {
-      margin-top: 8px;
-      display: flex;
-      gap: 8px;
-      width: 96vw;
-      max-width: 720px;
-    }
-    button {
-      flex: 1;
-      padding: 13px 10px;
-      font-size: 15px;
-      background: #ff5722;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      font-weight: bold;
-    }
-    button.secondary {
-      background: #2e2e2e;
-      border: 1px solid #555;
-    }
-    button.active-mode {
-      background: #2e7d32;
-      border: 1px solid #66bb6a;
-    }
-    button:disabled {
-      opacity: 0.4;
-      cursor: not-allowed;
-    }
-    .status-bar {
-      margin-top: 8px;
-      font-size: 12px;
-      font-family: monospace;
-      color: #aaa;
-      background: #181818;
-      border: 1px solid #333;
-      padding: 7px 10px;
-      border-radius: 6px;
-      width: 96vw;
-      max-width: 720px;
-      text-align: center;
-    }
+      width: 68px; padding: 6px; font-size: 16px; font-weight: bold;
+      text-align: center; background: #121212; color: #fff;
+      border: 1px solid #66bb6a; border-radius: 6px; }
+
+    #deltaBox { background: #1b2a3a; border-color: #42a5f5; }
+    #deltaBox input[type="range"] { flex: 1; accent-color: #42a5f5; }
+
+    .btn-row { margin-top: 8px; display: flex; gap: 8px; width: 96vw; max-width: 720px; }
+    button { flex: 1; padding: 13px 10px; font-size: 15px; background: #ff5722;
+      color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
+    button.secondary { background: #2e2e2e; border: 1px solid #555; }
+    button.active-mode { background: #2e7d32; border: 1px solid #66bb6a; }
+    button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .status-bar { margin-top: 8px; font-size: 12px; font-family: monospace;
+      color: #aaa; background: #181818; border: 1px solid #333;
+      padding: 7px 10px; border-radius: 6px; width: 96vw; max-width: 720px; text-align: center; }
   </style>
 </head>
 <body>
@@ -150,13 +63,13 @@
     <canvas id="thermalCanvas" width="160" height="120"></canvas>
     <div class="crosshair"></div>
   </div>
-  
+
   <div class="legend-bar">
     <div id="gradientStrip" class="gradient-strip"></div>
     <div class="stats">
-      <span id="minTemp" style="color:#b388ff;">Min: -- °C</span>
+      <span id="minTemp" style="color:#b388ff;">Skala: -- °C</span>
       <span id="centerTemp" style="color:#ffb74d; font-weight:bold;">Mitte: -- °C</span>
-      <span id="maxTemp" style="color:#fff59d;">Max: -- °C</span>
+      <span id="maxTemp" style="color:#fff59d;">Skala: -- °C</span>
     </div>
   </div>
 
@@ -174,358 +87,519 @@
     <span>°C</span>
   </div>
 
+  <div id="deltaBox" class="scale-box">
+    <span>Empfindlichkeit: ±</span>
+    <input type="range" id="deltaSlider" min="3" max="25" value="8">
+    <span id="deltaLabel">8 °C</span>
+  </div>
+
   <div class="btn-row">
     <button id="scaleBtn" class="secondary">Skala: Auto</button>
     <button id="paletteBtn" class="secondary">Farbe: Ironbow</button>
     <button id="snapBtn" class="secondary" disabled>Foto</button>
   </div>
 
-  <button id="connectBtn" style="margin-top:8px; width:96vw; max-width:720px;">Kamera verbinden (WebUSB)</button>
+  <button id="connectBtn" style="margin-top:8px; width:96vw; max-width:720px;">
+    Kamera verbinden (WebUSB)
+  </button>
 
   <div id="statusBar" class="status-bar">
     Status: Bereit – Bitte Kamera verbinden
   </div>
 
-  <script>
-    const canvas = document.getElementById('thermalCanvas');
-    const ctx = canvas.getContext('2d');
-    ctx.imageSmoothingEnabled = true;
-    ctx.imageSmoothingQuality = 'high';
+<script>
+  // ============================================================
+  // Canvas-Setup
+  // ============================================================
+  const canvas = document.getElementById('thermalCanvas');
+  const ctx = canvas.getContext('2d');
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
 
-    const rawCanvas = document.createElement('canvas');
-    rawCanvas.width = 32;
-    rawCanvas.height = 24;
-    const rawCtx = rawCanvas.getContext('2d');
+  const rawCanvas = document.createElement('canvas');
+  rawCanvas.width = 32;
+  rawCanvas.height = 24;
+  const rawCtx = rawCanvas.getContext('2d');
 
-    const connectBtn = document.getElementById('connectBtn');
-    const scaleBtn = document.getElementById('scaleBtn');
-    const scaleBox = document.getElementById('scaleBox');
-    const fixedMinInput = document.getElementById('fixedMinInput');
-    const fixedMaxInput = document.getElementById('fixedMaxInput');
-    const paletteBtn = document.getElementById('paletteBtn');
-    const snapBtn = document.getElementById('snapBtn');
-    const statusBar = document.getElementById('statusBar');
-    const gradientStrip = document.getElementById('gradientStrip');
-    const smoothSlider = document.getElementById('smoothSlider');
-    const smoothLabel = document.getElementById('smoothLabel');
+  // ============================================================
+  // DOM-Referenzen
+  // ============================================================
+  const connectBtn    = document.getElementById('connectBtn');
+  const scaleBtn      = document.getElementById('scaleBtn');
+  const scaleBox      = document.getElementById('scaleBox');
+  const fixedMinInput = document.getElementById('fixedMinInput');
+  const fixedMaxInput = document.getElementById('fixedMaxInput');
+  const deltaBox      = document.getElementById('deltaBox');
+  const deltaSlider   = document.getElementById('deltaSlider');
+  const deltaLabel    = document.getElementById('deltaLabel');
+  const paletteBtn    = document.getElementById('paletteBtn');
+  const snapBtn       = document.getElementById('snapBtn');
+  const statusBar     = document.getElementById('statusBar');
+  const gradientStrip = document.getElementById('gradientStrip');
+  const smoothSlider  = document.getElementById('smoothSlider');
+  const smoothLabel   = document.getElementById('smoothLabel');
+  const minTempEl     = document.getElementById('minTemp');
+  const centerTempEl  = document.getElementById('centerTemp');
+  const maxTempEl     = document.getElementById('maxTemp');
 
-    let device;
-    let frameCount = 0;
-    let lastFpsTime = performance.now();
-    let currentFps = 0;
+  // ============================================================
+  // State
+  // ============================================================
+  let device = null;
+  let frameCount = 0;
+  let lastFpsTime = performance.now();
+  let currentFps = 0;
 
-    let smoothedTemps = null;
-    let smoothMin = null;
-    let smoothMax = null;
-    let lastDispMin = -5;
-    let lastDispMax = 35;
-    let lastCenter = 15;
+  let smoothedTemps = null;
+  const filteredTemps = new Float32Array(768);
+  const medianBuf = new Float32Array(9);
 
-    let fixedScaleMode = false;
+  let smoothMin = null;
+  let smoothMax = null;
+  let lastDispMin = -5;
+  let lastDispMax = 35;
+  let lastCenter = 15;
 
-    scaleBtn.addEventListener('click', () => {
-      fixedScaleMode = !fixedScaleMode;
-      if (fixedScaleMode) {
-        scaleBtn.innerText = 'Skala: Fest';
-        scaleBtn.classList.add('active-mode');
-        scaleBox.style.display = 'flex';
-      } else {
-        scaleBtn.innerText = 'Skala: Auto';
-        scaleBtn.classList.remove('active-mode');
-        scaleBox.style.display = 'none';
-        smoothMin = null;
-      }
-    });
+  const scaleModes = ['auto', 'delta', 'fixed'];
+  let scaleMode = 'auto';
+  let deltaGain = 8;
 
-    const palettes = ['Ironbow', 'Rainbow', 'White-Hot'];
-    let paletteIdx = 0;
+  // ============================================================
+  // Farbpaletten
+  // ============================================================
+  const palettes = ['Ironbow', 'Rainbow', 'White-Hot'];
+  let paletteIdx = 0;
 
-    function updateLegendStrip() {
-      const stops = [];
-      for (let i = 0; i <= 20; i++) {
-        const [r, g, b] = mapColor(i / 20);
-        stops.push(`rgb(${r},${g},${b}) ${i * 5}%`);
-      }
-      gradientStrip.style.background = `linear-gradient(to right, ${stops.join(', ')})`;
+  function mapColor(ratio) {
+    ratio = Math.max(0, Math.min(1, ratio));
+    const mode = palettes[paletteIdx];
+
+    if (mode === 'White-Hot') {
+      const v = Math.round(ratio * 255);
+      return [v, v, v];
     }
-
-    paletteBtn.addEventListener('click', () => {
-      paletteIdx = (paletteIdx + 1) % palettes.length;
-      paletteBtn.innerText = `Farbe: ${palettes.at(paletteIdx)}`;
-      updateLegendStrip();
-    });
-
-    smoothSlider.addEventListener('input', () => {
-      const v = Number(smoothSlider.value);
-      if (v < 35) smoothLabel.innerText = 'Stark';
-      else if (v < 70) smoothLabel.innerText = 'Mittel';
-      else smoothLabel.innerText = 'Direkt';
-    });
-
-    function mapColor(ratio) {
-      ratio = Math.max(0, Math.min(1, ratio));
-      const mode = palettes.at(paletteIdx);
-
-      if (mode === 'White-Hot') {
-        const v = Math.round(ratio * 255);
-        return [v, v, v];
-      }
-
-      if (mode === 'Rainbow') {
-        const r = Math.min(255, Math.max(0, Math.round(255 * (1.5 - Math.abs(4 * ratio - 3)))));
-        const g = Math.min(255, Math.max(0, Math.round(255 * (1.5 - Math.abs(4 * ratio - 2)))));
-        const b = Math.min(255, Math.max(0, Math.round(255 * (1.5 - Math.abs(4 * ratio - 1)))));
-        return [r, g, b];
-      }
-
-      // Ironbow
-      let r = 0, g = 0, b = 0;
-      if (ratio < 0.2) {
-        const t = ratio / 0.2;
-        r = Math.round(t * 75);
-        g = 0;
-        b = Math.round(t * 130);
-      } else if (ratio < 0.45) {
-        const t = (ratio - 0.2) / 0.25;
-        r = Math.round(75 + t * 145);
-        g = Math.round(t * 20);
-        b = Math.round(130 - t * 40);
-      } else if (ratio < 0.7) {
-        const t = (ratio - 0.45) / 0.25;
-        r = Math.round(220 + t * 35);
-        g = Math.round(20 + t * 120);
-        b = Math.round(90 - t * 90);
-      } else if (ratio < 0.9) {
-        const t = (ratio - 0.7) / 0.2;
-        r = 255;
-        g = Math.round(140 + t * 115);
-        b = Math.round(t * 80);
-      } else {
-        const t = (ratio - 0.9) / 0.1;
-        r = 255;
-        g = 255;
-        b = Math.round(80 + t * 175);
-      }
+    if (mode === 'Rainbow') {
+      const r = Math.min(255, Math.max(0, Math.round(255 * (1.5 - Math.abs(4 * ratio - 3)))));
+      const g = Math.min(255, Math.max(0, Math.round(255 * (1.5 - Math.abs(4 * ratio - 2)))));
+      const b = Math.min(255, Math.max(0, Math.round(255 * (1.5 - Math.abs(4 * ratio - 1)))));
       return [r, g, b];
     }
+    // Ironbow
+    let r = 0, g = 0, b = 0;
+    if (ratio < 0.2) {
+      const t = ratio / 0.2;
+      r = Math.round(t * 75); g = 0; b = Math.round(t * 130);
+    } else if (ratio < 0.45) {
+      const t = (ratio - 0.2) / 0.25;
+      r = Math.round(75 + t * 145); g = Math.round(t * 20); b = Math.round(130 - t * 40);
+    } else if (ratio < 0.7) {
+      const t = (ratio - 0.45) / 0.25;
+      r = Math.round(220 + t * 35); g = Math.round(20 + t * 120); b = Math.round(90 - t * 90);
+    } else if (ratio < 0.9) {
+      const t = (ratio - 0.7) / 0.2;
+      r = 255; g = Math.round(140 + t * 115); b = Math.round(t * 80);
+    } else {
+      const t = (ratio - 0.9) / 0.1;
+      r = 255; g = 255; b = Math.round(80 + t * 175);
+    }
+    return [r, g, b];
+  }
 
-    updateLegendStrip();
-    function drawFrame(temps) {
-      const alpha = Number(smoothSlider.value) / 100;
-      if (!smoothedTemps) smoothedTemps = new Float32Array(temps);
+  function updateLegendStrip() {
+    const stops = [];
+    for (let i = 0; i <= 20; i++) {
+      const [r, g, b] = mapColor(i / 20);
+      stops.push(`rgb(${r},${g},${b}) ${i * 5}%`);
+    }
+    gradientStrip.style.background = `linear-gradient(to right, ${stops.join(', ')})`;
+  }
+  updateLegendStrip();
 
-      let rawMin = Infinity, rawMax = -Infinity;
-      let validPixels = 0;
-      let zeroPixels = 0;
+  // ============================================================
+  // Skalen-Modus: Auto / Delta / Fest
+  // ============================================================
+  function updateScaleUI() {
+    scaleBtn.innerText =
+      scaleMode === 'auto'  ? 'Skala: Auto'  :
+      scaleMode === 'delta' ? 'Skala: Delta' :
+                              'Skala: Fest';
+    scaleBtn.classList.toggle('active-mode', scaleMode !== 'auto');
+    scaleBox.style.display = (scaleMode === 'fixed') ? 'flex' : 'none';
+    deltaBox.style.display = (scaleMode === 'delta') ? 'flex' : 'none';
+    smoothMin = null; // Skala neu einrasten lassen
+  }
 
-      for (let i = 0; i < 768; i++) {
-        const t = temps.at(i);
-        if (t === 0) zeroPixels++;
-        if (!isNaN(t) && t > -40 && t < 300) {
-          validPixels++;
-          const prev = smoothedTemps.at(i);
-          const next = prev + alpha * (t - prev);
-          smoothedTemps.set([next], i);
+  scaleBtn.addEventListener('click', () => {
+    const idx = scaleModes.indexOf(scaleMode);
+    scaleMode = scaleModes[(idx + 1) % scaleModes.length];
+    updateScaleUI();
+  });
 
-          if (next < rawMin) rawMin = next;
-          if (next > rawMax) rawMax = next;
+  deltaSlider.addEventListener('input', () => {
+    deltaGain = Number(deltaSlider.value);
+    deltaLabel.innerText = deltaGain + ' °C';
+    smoothMin = null;
+  });
+
+  // ============================================================
+  // Glättungs-Slider
+  // ============================================================
+  smoothSlider.addEventListener('input', () => {
+    const v = Number(smoothSlider.value);
+    smoothLabel.innerText = v < 35 ? 'Stark' : (v < 70 ? 'Mittel' : 'Direkt');
+  });
+
+  // ============================================================
+  // Median-3×3-Filter (killt Bad-Pixel-Flimmern)
+  // ============================================================
+  function medianFilter(src, dst) {
+    for (let i = 0; i < 768; i++) {
+      const x = i & 31, y = i >> 5;
+      let k = 0;
+      for (let dy = -1; dy <= 1; dy++) {
+        const ny = y + dy;
+        if (ny < 0 || ny > 23) continue;
+        for (let dx = -1; dx <= 1; dx++) {
+          const nx = x + dx;
+          if (nx < 0 || nx > 31) continue;
+          medianBuf[k++] = src[ny * 32 + nx];
         }
       }
-
-      if (fixedScaleMode) {
-        // Deine eigenen Werte aus den beiden Eingabefeldern übernehmen
-        const userMin = parseFloat(fixedMinInput.value);
-        const userMax = parseFloat(fixedMaxInput.value);
-        smoothMin = isNaN(userMin) ? -5.0 : userMin;
-        smoothMax = (isNaN(userMax) || userMax <= smoothMin) ? smoothMin + 10.0 : userMax;
-        lastDispMin = smoothMin;
-        lastDispMax = smoothMax;
-      } else {
-        lastDispMin = rawMin;
-        lastDispMax = rawMax;
-        let scaleMin = rawMin;
-        let scaleMax = rawMax;
-        if (scaleMax - scaleMin < 3.0) {
-          const mid = (scaleMax + scaleMin) / 2;
-          scaleMin = mid - 1.5;
-          scaleMax = mid + 1.5;
-        }
-        if (smoothMin === null) {
-          smoothMin = scaleMin;
-          smoothMax = scaleMax;
-        } else {
-          smoothMin += 0.25 * (scaleMin - smoothMin);
-          smoothMax += 0.25 * (scaleMax - smoothMax);
-        }
+      // Insertion-Sort (k ≤ 9, kein Alloc)
+      for (let a = 1; a < k; a++) {
+        const v = medianBuf[a];
+        let b = a - 1;
+        while (b >= 0 && medianBuf[b] > v) { medianBuf[b + 1] = medianBuf[b]; b--; }
+        medianBuf[b + 1] = v;
       }
+      dst[i] = medianBuf[k >> 1];
+    }
+  }
 
-      frameCount++;
-      const now = performance.now();
-      if (now - lastFpsTime >= 1000) {
-        currentFps = frameCount;
-        frameCount = 0;
-        lastFpsTime = now;
+  // ============================================================
+  // Skalenberechnung (Perzentil / Delta / Fest)
+  // ============================================================
+  function computeScale() {
+    const vals = [];
+    for (let i = 0; i < 768; i++) {
+      const v = filteredTemps[i];
+      if (v > -40 && v < 300) vals.push(v);
+    }
+    if (vals.length === 0) { smoothMin = null; return; }
+    vals.sort((a, b) => a - b);
+    const n = vals.length;
+
+    let sMin, sMax;
+    if (scaleMode === 'delta') {
+      const ambient = vals[n >> 1];   // Median = robust gegen Igel
+      sMin = ambient - 2;
+      sMax = ambient + deltaGain;
+    } else if (scaleMode === 'fixed') {
+      const userMin = parseFloat(fixedMinInput.value);
+      const userMax = parseFloat(fixedMaxInput.value);
+      sMin = isNaN(userMin) ? -5 : userMin;
+      sMax = (isNaN(userMax) || userMax <= sMin) ? sMin + 10 : userMax;
+    } else {
+      // Auto: 5./95. Perzentil, 1 °C Mindestspanne
+      sMin = vals[Math.floor(n * 0.05)] ?? -5;
+      sMax = vals[Math.floor(n * 0.95)] ?? 35;
+      if (sMax - sMin < 1.0) {
+        const mid = (sMax + sMin) / 2;
+        sMin = mid - 0.5; sMax = mid + 0.5;
       }
-
-      if (validPixels === 768 && zeroPixels === 0) {
-        statusBar.style.color = '#81c784';
-        statusBar.innerText = `OK | Pixel: ${validPixels}/768 | Max im Bild: ${rawMax.toFixed(1)}°C | ${currentFps} FPS`;
-      } else {
-        statusBar.style.color = '#ffb74d';
-        statusBar.innerText = `WARNUNG | Gültig: ${validPixels}/768 | Nullen: ${zeroPixels} | ${currentFps} FPS`;
-      }
-
-      lastCenter = smoothedTemps.at(12 * 32 + 16);
-      if (fixedScaleMode) {
-        document.getElementById('minTemp').innerText = `Skala: ${lastDispMin.toFixed(1)} °C`;
-        document.getElementById('centerTemp').innerText = `Mitte: ${lastCenter.toFixed(1)} °C`;
-        document.getElementById('maxTemp').innerText = `Skala: ${lastDispMax.toFixed(1)} °C`;
-      } else {
-        document.getElementById('minTemp').innerText = `Min: ${rawMin.toFixed(1)} °C`;
-        document.getElementById('centerTemp').innerText = `Mitte: ${lastCenter.toFixed(1)} °C`;
-        document.getElementById('maxTemp').innerText = `Max: ${rawMax.toFixed(1)} °C`;
-      }
-
-      const imgData = rawCtx.createImageData(32, 24);
-      for (let i = 0; i < 768; i++) {
-        const x = 31 - (i % 32);
-        const y = Math.floor(i / 32);
-        const targetIdx = (y * 32 + x) * 4;
-        const ratio = (smoothedTemps.at(i) - smoothMin) / (smoothMax - smoothMin || 1);
-
-        const [r, g, b] = mapColor(ratio);
-        imgData.data.set([r, g, b, 255], targetIdx);
-      }
-      rawCtx.putImageData(imgData, 0, 0);
-
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.drawImage(rawCanvas, 0, 0, canvas.width, canvas.height);
     }
 
-    snapBtn.addEventListener('click', () => {
-      const exportCanvas = document.createElement('canvas');
-      exportCanvas.width = 640;
-      exportCanvas.height = 560;
-      const eCtx = exportCanvas.getContext('2d');
+    if (smoothMin === null || scaleMode === 'fixed') {
+      smoothMin = sMin; smoothMax = sMax;
+    } else {
+      const rate = (scaleMode === 'delta') ? 0.08 : 0.10;
+      smoothMin += rate * (sMin - smoothMin);
+      smoothMax += rate * (sMax - smoothMax);
+    }
+    lastDispMin = smoothMin;
+    lastDispMax = smoothMax;
+  }
 
-      eCtx.imageSmoothingEnabled = true;
-      eCtx.imageSmoothingQuality = 'high';
-      eCtx.drawImage(rawCanvas, 0, 0, 640, 480);
+  // ============================================================
+  // Frame verarbeiten und zeichnen
+  // ============================================================
+  function drawFrame(temps) {
+    // 1) Pixel-EMA
+    if (!smoothedTemps) smoothedTemps = new Float32Array(temps);
+    const alpha = Number(smoothSlider.value) / 100;
+    let rawMin = Infinity, rawMax = -Infinity;
+    let validPixels = 0, zeroPixels = 0;
 
-      eCtx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
-      eCtx.lineWidth = 2;
-      eCtx.beginPath();
-      eCtx.moveTo(306, 240); eCtx.lineTo(334, 240);
-      eCtx.moveTo(320, 226); eCtx.lineTo(320, 254);
-      eCtx.stroke();
-
-      const nowStr = new Date().toLocaleString('de-DE');
-      eCtx.fillStyle = 'rgba(0, 0, 0, 0.55)';
-      eCtx.fillRect(10, 10, 185, 26);
-      eCtx.fillStyle = '#fff';
-      eCtx.font = '14px sans-serif';
-      eCtx.fillText(nowStr, 18, 28);
-
-      eCtx.fillStyle = '#181818';
-      eCtx.fillRect(0, 480, 640, 80);
-
-      const grad = eCtx.createLinearGradient(20, 0, 620, 0);
-      for (let i = 0; i <= 20; i++) {
-        const [r, g, b] = mapColor(i / 20);
-        grad.addColorStop(i / 20, `rgb(${r},${g},${b})`);
+    for (let i = 0; i < 768; i++) {
+      const t = temps[i];
+      if (t === 0) zeroPixels++;
+      if (t > -40 && t < 300) {
+        validPixels++;
+        const prev = smoothedTemps[i];
+        const next = prev + alpha * (t - prev);
+        smoothedTemps[i] = next;
+        if (next < rawMin) rawMin = next;
+        if (next > rawMax) rawMax = next;
       }
-      eCtx.fillStyle = grad;
-      eCtx.fillRect(20, 494, 600, 20);
-      eCtx.strokeStyle = '#555';
-      eCtx.strokeRect(20, 494, 600, 20);
+    }
 
-      eCtx.font = 'bold 18px sans-serif';
-      eCtx.fillStyle = '#b388ff';
-      eCtx.textAlign = 'left';
-      eCtx.fillText(`Min: ${lastDispMin.toFixed(1)} °C`, 20, 542);
+    // 2) Median-Filter
+    medianFilter(smoothedTemps, filteredTemps);
 
-      eCtx.fillStyle = '#ffb74d';
-      eCtx.textAlign = 'center';
-      eCtx.fillText(`Mitte: ${lastCenter.toFixed(1)} °C`, 320, 542);
+    // 3) Skala
+    computeScale();
 
-      eCtx.fillStyle = '#fff59d';
-      eCtx.textAlign = 'right';
-      eCtx.fillText(`Max: ${lastDispMax.toFixed(1)} °C`, 620, 542);
+    // 4) Bild einfärben (gespiegelt)
+    const imgData = rawCtx.createImageData(32, 24);
+    const span = (smoothMax - smoothMin) || 1;
+    for (let i = 0; i < 768; i++) {
+      const x = 31 - (i & 31);
+      const y = i >> 5;
+      const tIdx = (y * 32 + x) << 2;
+      const ratio = (filteredTemps[i] - smoothMin) / span;
+      const [r, g, b] = mapColor(ratio);
+      imgData.data[tIdx]     = r;
+      imgData.data[tIdx + 1] = g;
+      imgData.data[tIdx + 2] = b;
+      imgData.data[tIdx + 3] = 255;
+    }
+    rawCtx.putImageData(imgData, 0, 0);
 
-      const link = document.createElement('a');
-      const fileStamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
-      link.download = `Waermebild_${fileStamp}.png`;
-      link.href = exportCanvas.toDataURL('image/png');
-      link.click();
-    });
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(rawCanvas, 0, 0, canvas.width, canvas.height);
 
-    connectBtn.addEventListener('click', async () => {
-      try {
-        statusBar.style.color = '#aaa';
-        statusBar.innerText = 'Status: Warte auf USB-Auswahl...';
+    // 5) FPS
+    frameCount++;
+    const now = performance.now();
+    if (now - lastFpsTime >= 1000) {
+      currentFps = frameCount;
+      frameCount = 0;
+      lastFpsTime = now;
+    }
 
-        device = await navigator.usb.requestDevice({ filters: [] });
-        await device.open();
-        await device.selectConfiguration(1);
-        
-        let claimedIface = null;
-        for (const iface of device.configuration.interfaces) {
-          if (iface.alternates.at(0).interfaceClass === 255) {
-            try {
-              await device.claimInterface(iface.interfaceNumber);
-              claimedIface = iface;
-              break;
-            } catch (e) {}
-          }
-        }
-        if (!claimedIface) {
-          throw new Error("USB-Interface belegt (Kabel kurz abziehen!).");
-        }
-        const epIn = claimedIface.alternates.at(0).endpoints.find(
-          e => e.direction === 'in'
-        ).endpointNumber;
+    // 6) Zentrum
+    lastCenter = filteredTemps[12 * 32 + 16];
 
-        await device.controlTransferOut({
-          requestType: 'class', recipient: 'interface',
-          request: 0x22, value: 0x01, index: claimedIface.interfaceNumber
-        });
+    // 7) Statuszeile
+    if (validPixels === 768 && zeroPixels === 0) {
+      statusBar.style.color = '#81c784';
+      statusBar.innerText =
+        `OK | ${validPixels}/768 | Min: ${rawMin.toFixed(1)}°C Max: ${rawMax.toFixed(1)}°C | ${currentFps} FPS`;
+    } else {
+      statusBar.style.color = '#ffb74d';
+      statusBar.innerText =
+        `WARNUNG | Gültig: ${validPixels}/768 | Nullen: ${zeroPixels} | ${currentFps} FPS`;
+    }
 
-        connectBtn.style.display = 'none';
-        snapBtn.disabled = false;
-        statusBar.innerText = 'Status: Verbunden – Warte auf erstes Bild...';
-        readLoop(epIn);
-      } catch (err) {
-        statusBar.style.color = '#e57373';
-        statusBar.innerText = 'Fehler: ' + err.message;
+    // 8) Live-Legende (Farbgrenzen)
+    minTempEl.innerText    = `Skala: ${smoothMin.toFixed(1)} °C`;
+    centerTempEl.innerText = `Mitte: ${lastCenter.toFixed(1)} °C`;
+    maxTempEl.innerText    = `Skala: ${smoothMax.toFixed(1)} °C`;
+  }
+
+  // ============================================================
+  // Schnappschuss
+  // ============================================================
+  snapBtn.addEventListener('click', () => {
+    const exportCanvas = document.createElement('canvas');
+    exportCanvas.width = 640;
+    exportCanvas.height = 560;
+    const eCtx = exportCanvas.getContext('2d');
+
+    eCtx.imageSmoothingEnabled = true;
+    eCtx.imageSmoothingQuality = 'high';
+    eCtx.drawImage(rawCanvas, 0, 0, 640, 480);
+
+    // Fadenkreuz
+    eCtx.strokeStyle = 'rgba(255,255,255,0.9)';
+    eCtx.lineWidth = 2;
+    eCtx.beginPath();
+    eCtx.moveTo(306, 240); eCtx.lineTo(334, 240);
+    eCtx.moveTo(320, 226); eCtx.lineTo(320, 254);
+    eCtx.stroke();
+
+    // Zeitstempel
+    const nowStr = new Date().toLocaleString('de-DE');
+    eCtx.fillStyle = 'rgba(0,0,0,0.55)';
+    eCtx.fillRect(10, 10, 185, 26);
+    eCtx.fillStyle = '#fff';
+    eCtx.font = '14px sans-serif';
+    eCtx.textAlign = 'left';
+    eCtx.fillText(nowStr, 18, 28);
+
+    // Modus-Label oben rechts
+    const modeLabels = { auto: 'Auto', delta: 'Delta', fixed: 'Fest' };
+    eCtx.fillStyle = 'rgba(0,0,0,0.55)';
+    eCtx.fillRect(560, 10, 70, 26);
+    eCtx.fillStyle = '#fff';
+    eCtx.font = 'bold 14px sans-serif';
+    eCtx.textAlign = 'center';
+    eCtx.fillText(modeLabels[scaleMode], 595, 28);
+
+    // Legende unten
+    eCtx.fillStyle = '#181818';
+    eCtx.fillRect(0, 480, 640, 80);
+
+    const grad = eCtx.createLinearGradient(20, 0, 620, 0);
+    for (let i = 0; i <= 20; i++) {
+      const [r, g, b] = mapColor(i / 20);
+      grad.addColorStop(i / 20, `rgb(${r},${g},${b})`);
+    }
+    eCtx.fillStyle = grad;
+    eCtx.fillRect(20, 494, 600, 20);
+    eCtx.strokeStyle = '#555';
+    eCtx.strokeRect(20, 494, 600, 20);
+
+    eCtx.font = 'bold 18px sans-serif';
+    eCtx.fillStyle = '#b388ff';
+    eCtx.textAlign = 'left';
+    eCtx.fillText(`Min: ${lastDispMin.toFixed(1)} °C`, 20, 542);
+
+    eCtx.fillStyle = '#ffb74d';
+    eCtx.textAlign = 'center';
+    eCtx.fillText(`Mitte: ${lastCenter.toFixed(1)} °C`, 320, 542);
+
+    eCtx.fillStyle = '#fff59d';
+    eCtx.textAlign = 'right';
+    eCtx.fillText(`Max: ${lastDispMax.toFixed(1)} °C`, 620, 542);
+
+    const link = document.createElement('a');
+    const fileStamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+    link.download = `Waermebild_${fileStamp}.png`;
+    link.href = exportCanvas.toDataURL('image/png');
+    link.click();
+  });
+
+  // ============================================================
+  // Wakelock (verhindert Standbild durch Display-Timeout)
+  // ============================================================
+  let wakeLock = null;
+  async function keepAwake() {
+    try {
+      if ('wakeLock' in navigator) {
+        wakeLock = await navigator.wakeLock.request('screen');
       }
-    });
+    } catch (e) { /* nicht unterstützt, egal */ }
+  }
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && device?.opened) keepAwake();
+  });
 
-    async function readLoop(epIn) {
-      let buffer = new Uint8Array(0);
-      const FRAME_BYTES = 2 + 768 * 4;
+  // ============================================================
+  // UI-Reset nach Disconnect
+  // ============================================================
+  function resetUI(msg) {
+    connectBtn.style.display = '';
+    connectBtn.innerText = 'Kamera verbinden (WebUSB)';
+    snapBtn.disabled = true;
+    statusBar.style.color = '#e57373';
+    statusBar.innerText = 'Status: ' + msg;
+    try { if (device && device.opened) device.close(); } catch (e) {}
+    device = null;
+  }
 
-      while (device.opened) {
-        const result = await device.transferIn(epIn, 4096);
-        if (result.data && result.data.byteLength > 0) {
-          const chunk = new Uint8Array(result.data.buffer);
-          const combined = new Uint8Array(buffer.length + chunk.length);
-          combined.set(buffer);
-          combined.set(chunk, buffer.length);
-          buffer = combined;
+  // ============================================================
+  // Verbinden
+  // ============================================================
+  connectBtn.addEventListener('click', async () => {
+    if (!window.isSecureContext) {
+      statusBar.innerText = 'HTTPS (oder localhost) erforderlich für WebUSB.';
+      return;
+    }
+    if (!navigator.usb) {
+      statusBar.innerText = 'WebUSB nicht verfügbar (Chrome/Edge am Android nötig).';
+      return;
+    }
 
-          while (buffer.length >= FRAME_BYTES) {
-            if (buffer.at(0) === 0xAA && buffer.at(1) === 0x55) {
-              const frameBytes = buffer.slice(2, FRAME_BYTES);
-              const temps = new Float32Array(frameBytes.buffer);
-              drawFrame(temps);
-              buffer = buffer.slice(FRAME_BYTES);
-            } else {
-              buffer = buffer.slice(1);
-            }
+    try {
+      statusBar.style.color = '#aaa';
+      statusBar.innerText = 'Status: Warte auf USB-Auswahl...';
+
+      device = await navigator.usb.requestDevice({ filters: [] });
+      await device.open();
+      await device.selectConfiguration(device.configurations[0].configurationValue);
+
+      // Vendor-spezifisches Interface (class 255) finden
+      let claimedIface = null;
+      for (const iface of device.configuration.interfaces) {
+        if (iface.alternates[0].interfaceClass === 255) {
+          try {
+            await device.claimInterface(iface.interfaceNumber);
+            claimedIface = iface;
+            break;
+          } catch (e) { /* nächstes probieren */ }
+        }
+      }
+      if (!claimedIface) {
+        throw new Error('USB-Interface belegt (Kabel kurz abziehen!).');
+      }
+
+      const epIn = claimedIface.alternates[0].endpoints.find(
+        e => e.direction === 'in'
+      ).endpointNumber;
+
+      // DTR aktivieren
+      await device.controlTransferOut({
+        requestType: 'class', recipient: 'interface',
+        request: 0x22, value: 0x01, index: claimedIface.interfaceNumber
+      });
+
+      connectBtn.style.display = 'none';
+      snapBtn.disabled = false;
+      statusBar.style.color = '#aaa';
+      statusBar.innerText = 'Status: Verbunden – Warte auf erstes Bild...';
+
+      await keepAwake();
+      readLoop(epIn).catch(err => {
+        resetUI('Verbindung verloren: ' + err.message);
+      });
+    } catch (err) {
+      statusBar.style.color = '#e57373';
+      statusBar.innerText = 'Fehler: ' + err.message;
+    }
+  });
+
+  // ============================================================
+  // Leseschleife mit Timeout
+  // ============================================================
+  function transferWithTimeout(ep, len, ms) {
+    return Promise.race([
+      device.transferIn(ep, len),
+      new Promise((_, rej) => setTimeout(
+        () => rej(new Error('USB-Timeout – Kabel prüfen?')), ms))
+    ]);
+  }
+
+  async function readLoop(epIn) {
+    let buffer = new Uint8Array(0);
+    const FRAME_BYTES = 2 + 768 * 4;
+
+    while (device?.opened) {
+      const result = await transferWithTimeout(epIn, 4096, 2500);
+
+      if (result.data && result.data.byteLength > 0) {
+        // DataView-Offset respektieren (Chrome gibt heute ganzen Buffer, aber nicht garantiert)
+        const chunk = new Uint8Array(
+          result.data.buffer, result.data.byteOffset, result.data.byteLength
+        );
+        const combined = new Uint8Array(buffer.length + chunk.length);
+        combined.set(buffer);
+        combined.set(chunk, buffer.length);
+        buffer = combined;
+
+        while (buffer.length >= FRAME_BYTES) {
+          if (buffer[0] === 0xAA && buffer[1] === 0x55) {
+            const frameBytes = buffer.slice(2, FRAME_BYTES);
+            const temps = new Float32Array(frameBytes.buffer);
+            drawFrame(temps);
+            buffer = buffer.slice(FRAME_BYTES);
+          } else {
+            buffer = buffer.slice(1); // Sync verloren -> 1 Byte weiter
           }
         }
       }
     }
-  </script>
+  }
+</script>
 </body>
 </html>
