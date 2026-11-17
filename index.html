@@ -14,7 +14,8 @@
     .viewer { position: relative; width: 96vw; max-width: 720px;
       aspect-ratio: 4 / 3; border: 2px solid #444; border-radius: 10px;
       overflow: hidden; background: #000; }
-    canvas { width: 100%; height: 100%; display: block; }
+    canvas { width: 100%; height: 100%; display: block;
+      object-fit: contain; background: #000; }
     .crosshair { position: absolute; top: 50%; left: 50%; width: 24px; height: 24px;
       transform: translate(-50%, -50%); pointer-events: none; }
     .crosshair::before, .crosshair::after { content: ""; position: absolute;
@@ -59,7 +60,7 @@
 </head>
 <body>
 
-  <div class="viewer">
+  <div class="viewer" id="viewer">
     <canvas id="thermalCanvas" width="160" height="120"></canvas>
     <div class="crosshair"></div>
   </div>
@@ -94,8 +95,11 @@
   </div>
 
   <div class="btn-row">
-    <button id="scaleBtn" class="secondary">Skala: Auto</button>
+    <button id="scaleBtn" class="secondary">Skala: Delta</button>
     <button id="paletteBtn" class="secondary">Farbe: Ironbow</button>
+  </div>
+  <div class="btn-row">
+    <button id="rotateBtn" class="secondary">↻ 0°</button>
     <button id="snapBtn" class="secondary" disabled>Foto</button>
   </div>
 
@@ -112,6 +116,7 @@
   // Canvas-Setup
   // ============================================================
   const canvas = document.getElementById('thermalCanvas');
+  const viewer = document.getElementById('viewer');
   const ctx = canvas.getContext('2d');
   ctx.imageSmoothingEnabled = true;
   ctx.imageSmoothingQuality = 'high';
@@ -133,6 +138,7 @@
   const deltaSlider   = document.getElementById('deltaSlider');
   const deltaLabel    = document.getElementById('deltaLabel');
   const paletteBtn    = document.getElementById('paletteBtn');
+  const rotateBtn     = document.getElementById('rotateBtn');
   const snapBtn       = document.getElementById('snapBtn');
   const statusBar     = document.getElementById('statusBar');
   const gradientStrip = document.getElementById('gradientStrip');
@@ -163,6 +169,71 @@
   const scaleModes = ['auto', 'delta', 'fixed'];
   let scaleMode = 'delta';
   let deltaGain = 10;
+
+  // Rotation
+  const rotations = [0, 90, 180, 270];
+  let rotIdx = 0;
+  let rotation = 0;
+  let rotLUT = null;   // Zuordnung Quellindex -> Ziel-Byte-Index in imageData
+  let rotW = 32;
+  let rotH = 24;
+
+  // ============================================================
+  // Rotations-LUT und Canvas-Größen aufbauen
+  // ============================================================
+  function updateRotation() {
+    const lut = new Uint32Array(768);
+    let w, h;
+    for (let i = 0; i < 768; i++) {
+      const sx = i & 31;
+      const sy = i >> 5;
+      const mx = 31 - sx;   // horizontale Spiegelung
+      const my = sy;
+      let dx, dy;
+      switch (rotation) {
+        case 0:   // keine Rotation
+          w = 32; h = 24;
+          dx = mx; dy = my; break;
+        case 90:  // 90° im Uhrzeigersinn
+          w = 24; h = 32;
+          dx = 23 - my; dy = mx; break;
+        case 180: // 180°
+          w = 32; h = 24;
+          dx = 31 - mx; dy = 23 - my; break;
+        case 270: // 90° gegen Uhrzeigersinn
+          w = 24; h = 32;
+          dx = my; dy = 31 - mx; break;
+      }
+      lut[i] = (dy * w + dx) << 2;
+    }
+    rotLUT = lut;
+    rotW = w;
+    rotH = h;
+
+    rawCanvas.width = w;
+    rawCanvas.height = h;
+
+    // Anzeige-Canvas: Portrait bleibt Portrait, aber object-fit:contain
+    // sorgt dafür, dass im 4:3-Viewer nichts verzerrt wird
+    canvas.width = (w === 32) ? 160 : 120;
+    canvas.height = (h === 24) ? 120 : 160;
+
+    // Glättung zurücksetzen, damit kein altes Bild durchscheint
+    smoothedTemps = null;
+    smoothMin = null;
+
+    rotateBtn.innerText = `↻ ${rotation}°`;
+    rotateBtn.classList.toggle('active-mode', rotation !== 0);
+  }
+
+  rotateBtn.addEventListener('click', () => {
+    rotIdx = (rotIdx + 1) % rotations.length;
+    rotation = rotations[rotIdx];
+    updateRotation();
+  });
+
+  // Beim Laden initialisieren
+  updateRotation();
 
   // ============================================================
   // Farbpaletten
@@ -216,7 +287,7 @@
   updateLegendStrip();
 
   // ============================================================
-  // Skalen-Modus: Auto / Delta / Fest
+  // Skalen-Modus
   // ============================================================
   function updateScaleUI() {
     scaleBtn.innerText =
@@ -226,7 +297,7 @@
     scaleBtn.classList.toggle('active-mode', scaleMode !== 'auto');
     scaleBox.style.display = (scaleMode === 'fixed') ? 'flex' : 'none';
     deltaBox.style.display = (scaleMode === 'delta') ? 'flex' : 'none';
-    smoothMin = null; // Skala neu einrasten lassen
+    smoothMin = null;
   }
 
   scaleBtn.addEventListener('click', () => {
@@ -241,7 +312,6 @@
     smoothMin = null;
   });
 
-  // Beim Laden direkt in Delta-Modus starten
   updateScaleUI();
 
   // ============================================================
@@ -253,7 +323,7 @@
   });
 
   // ============================================================
-  // Median-3×3-Filter (killt Bad-Pixel-Flimmern)
+  // Median-3×3-Filter
   // ============================================================
   function medianFilter(src, dst) {
     for (let i = 0; i < 768; i++) {
@@ -268,7 +338,6 @@
           medianBuf[k++] = src[ny * 32 + nx];
         }
       }
-      // Insertion-Sort (k ≤ 9, kein Alloc)
       for (let a = 1; a < k; a++) {
         const v = medianBuf[a];
         let b = a - 1;
@@ -280,7 +349,7 @@
   }
 
   // ============================================================
-  // Skalenberechnung (Perzentil / Delta / Fest)
+  // Skalenberechnung
   // ============================================================
   function computeScale() {
     const vals = [];
@@ -294,7 +363,7 @@
 
     let sMin, sMax;
     if (scaleMode === 'delta') {
-      const ambient = vals[n >> 1];   // Median = robust gegen Igel
+      const ambient = vals[n >> 1];
       sMin = ambient - 2;
       sMax = ambient + deltaGain;
     } else if (scaleMode === 'fixed') {
@@ -303,7 +372,6 @@
       sMin = isNaN(userMin) ? -5 : userMin;
       sMax = (isNaN(userMax) || userMax <= sMin) ? sMin + 10 : userMax;
     } else {
-      // Auto: 5./95. Perzentil, 1 °C Mindestspanne
       sMin = vals[Math.floor(n * 0.05)] ?? -5;
       sMax = vals[Math.floor(n * 0.95)] ?? 35;
       if (sMax - sMin < 1.0) {
@@ -327,7 +395,6 @@
   // Frame verarbeiten und zeichnen
   // ============================================================
   function drawFrame(temps) {
-    // 1) Pixel-EMA
     if (!smoothedTemps) smoothedTemps = new Float32Array(temps);
     const alpha = Number(smoothSlider.value) / 100;
     let rawMin = Infinity, rawMax = -Infinity;
@@ -346,19 +413,14 @@
       }
     }
 
-    // 2) Median-Filter
     medianFilter(smoothedTemps, filteredTemps);
-
-    // 3) Skala
     computeScale();
 
-    // 4) Bild einfärben (gespiegelt)
-    const imgData = rawCtx.createImageData(32, 24);
+    // Rotiertes Bild in rawCanvas füllen
+    const imgData = rawCtx.createImageData(rotW, rotH);
     const span = (smoothMax - smoothMin) || 1;
     for (let i = 0; i < 768; i++) {
-      const x = 31 - (i & 31);
-      const y = i >> 5;
-      const tIdx = (y * 32 + x) << 2;
+      const tIdx = rotLUT[i];
       const ratio = (filteredTemps[i] - smoothMin) / span;
       const [r, g, b] = mapColor(ratio);
       imgData.data[tIdx]     = r;
@@ -371,7 +433,6 @@
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.drawImage(rawCanvas, 0, 0, canvas.width, canvas.height);
 
-    // 5) FPS
     frameCount++;
     const now = performance.now();
     if (now - lastFpsTime >= 1000) {
@@ -380,10 +441,8 @@
       lastFpsTime = now;
     }
 
-    // 6) Zentrum
     lastCenter = filteredTemps[12 * 32 + 16];
 
-    // 7) Statuszeile
     if (validPixels === 768 && zeroPixels === 0) {
       statusBar.style.color = '#81c784';
       statusBar.innerText =
@@ -394,34 +453,40 @@
         `WARNUNG | Gültig: ${validPixels}/768 | Nullen: ${zeroPixels} | ${currentFps} FPS`;
     }
 
-    // 8) Live-Legende (Farbgrenzen)
     minTempEl.innerText    = `Skala: ${smoothMin.toFixed(1)} °C`;
     centerTempEl.innerText = `Mitte: ${lastCenter.toFixed(1)} °C`;
     maxTempEl.innerText    = `Skala: ${smoothMax.toFixed(1)} °C`;
   }
 
   // ============================================================
-  // Schnappschuss
+  // Schnappschuss (passt sich der Orientierung an)
   // ============================================================
   snapBtn.addEventListener('click', () => {
+    const isPortrait = (rotW === 24);
+    const imgW = isPortrait ? 480 : 640;
+    const imgH = isPortrait ? 640 : 480;
+    const legendH = 80;
+    const totalH = imgH + legendH;
+
     const exportCanvas = document.createElement('canvas');
-    exportCanvas.width = 640;
-    exportCanvas.height = 560;
+    exportCanvas.width = imgW;
+    exportCanvas.height = totalH;
     const eCtx = exportCanvas.getContext('2d');
 
     eCtx.imageSmoothingEnabled = true;
     eCtx.imageSmoothingQuality = 'high';
-    eCtx.drawImage(rawCanvas, 0, 0, 640, 480);
+    eCtx.drawImage(rawCanvas, 0, 0, imgW, imgH);
 
-    // Fadenkreuz
+    // Fadenkreuz mittig im Bild
+    const cx = imgW / 2, cy = imgH / 2;
     eCtx.strokeStyle = 'rgba(255,255,255,0.9)';
     eCtx.lineWidth = 2;
     eCtx.beginPath();
-    eCtx.moveTo(306, 240); eCtx.lineTo(334, 240);
-    eCtx.moveTo(320, 226); eCtx.lineTo(320, 254);
+    eCtx.moveTo(cx - 14, cy); eCtx.lineTo(cx + 14, cy);
+    eCtx.moveTo(cx, cy - 14); eCtx.lineTo(cx, cy + 14);
     eCtx.stroke();
 
-    // Zeitstempel
+    // Zeitstempel oben links
     const nowStr = new Date().toLocaleString('de-DE');
     eCtx.fillStyle = 'rgba(0,0,0,0.55)';
     eCtx.fillRect(10, 10, 185, 26);
@@ -433,38 +498,48 @@
     // Modus-Label oben rechts
     const modeLabels = { auto: 'Auto', delta: 'Delta', fixed: 'Fest' };
     eCtx.fillStyle = 'rgba(0,0,0,0.55)';
-    eCtx.fillRect(560, 10, 70, 26);
+    eCtx.fillRect(imgW - 80, 10, 70, 26);
     eCtx.fillStyle = '#fff';
     eCtx.font = 'bold 14px sans-serif';
     eCtx.textAlign = 'center';
-    eCtx.fillText(modeLabels[scaleMode], 595, 28);
+    eCtx.fillText(modeLabels[scaleMode], imgW - 45, 28);
+
+    // Rotations-Marker unten links (nur wenn gedreht)
+    if (rotation !== 0) {
+      eCtx.fillStyle = 'rgba(0,0,0,0.55)';
+      eCtx.fillRect(10, imgH - 36, 55, 26);
+      eCtx.fillStyle = '#fff';
+      eCtx.font = 'bold 14px sans-serif';
+      eCtx.textAlign = 'center';
+      eCtx.fillText(`↻${rotation}°`, 37, imgH - 17);
+    }
 
     // Legende unten
     eCtx.fillStyle = '#181818';
-    eCtx.fillRect(0, 480, 640, 80);
+    eCtx.fillRect(0, imgH, imgW, legendH);
 
-    const grad = eCtx.createLinearGradient(20, 0, 620, 0);
+    const grad = eCtx.createLinearGradient(20, 0, imgW - 20, 0);
     for (let i = 0; i <= 20; i++) {
       const [r, g, b] = mapColor(i / 20);
       grad.addColorStop(i / 20, `rgb(${r},${g},${b})`);
     }
     eCtx.fillStyle = grad;
-    eCtx.fillRect(20, 494, 600, 20);
+    eCtx.fillRect(20, imgH + 14, imgW - 40, 20);
     eCtx.strokeStyle = '#555';
-    eCtx.strokeRect(20, 494, 600, 20);
+    eCtx.strokeRect(20, imgH + 14, imgW - 40, 20);
 
     eCtx.font = 'bold 18px sans-serif';
     eCtx.fillStyle = '#b388ff';
     eCtx.textAlign = 'left';
-    eCtx.fillText(`Min: ${lastDispMin.toFixed(1)} °C`, 20, 542);
+    eCtx.fillText(`Min: ${lastDispMin.toFixed(1)} °C`, 20, imgH + 62);
 
     eCtx.fillStyle = '#ffb74d';
     eCtx.textAlign = 'center';
-    eCtx.fillText(`Mitte: ${lastCenter.toFixed(1)} °C`, 320, 542);
+    eCtx.fillText(`Mitte: ${lastCenter.toFixed(1)} °C`, imgW / 2, imgH + 62);
 
     eCtx.fillStyle = '#fff59d';
     eCtx.textAlign = 'right';
-    eCtx.fillText(`Max: ${lastDispMax.toFixed(1)} °C`, 620, 542);
+    eCtx.fillText(`Max: ${lastDispMax.toFixed(1)} °C`, imgW - 20, imgH + 62);
 
     const link = document.createElement('a');
     const fileStamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
@@ -474,7 +549,7 @@
   });
 
   // ============================================================
-  // Wakelock (verhindert Standbild durch Display-Timeout)
+  // Wakelock
   // ============================================================
   let wakeLock = null;
   async function keepAwake() {
@@ -482,14 +557,14 @@
       if ('wakeLock' in navigator) {
         wakeLock = await navigator.wakeLock.request('screen');
       }
-    } catch (e) { /* nicht unterstützt, egal */ }
+    } catch (e) {}
   }
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible' && device?.opened) keepAwake();
   });
 
   // ============================================================
-  // UI-Reset nach Disconnect
+  // UI-Reset
   // ============================================================
   function resetUI(msg) {
     connectBtn.style.display = '';
@@ -522,7 +597,6 @@
       await device.open();
       await device.selectConfiguration(device.configurations[0].configurationValue);
 
-      // Vendor-spezifisches Interface (class 255) finden
       let claimedIface = null;
       for (const iface of device.configuration.interfaces) {
         if (iface.alternates[0].interfaceClass === 255) {
@@ -530,7 +604,7 @@
             await device.claimInterface(iface.interfaceNumber);
             claimedIface = iface;
             break;
-          } catch (e) { /* nächstes probieren */ }
+          } catch (e) {}
         }
       }
       if (!claimedIface) {
@@ -541,7 +615,6 @@
         e => e.direction === 'in'
       ).endpointNumber;
 
-      // DTR aktivieren
       await device.controlTransferOut({
         requestType: 'class', recipient: 'interface',
         request: 0x22, value: 0x01, index: claimedIface.interfaceNumber
@@ -563,7 +636,7 @@
   });
 
   // ============================================================
-  // Leseschleife mit Timeout
+  // Leseschleife
   // ============================================================
   function transferWithTimeout(ep, len, ms) {
     return Promise.race([
@@ -581,7 +654,6 @@
       const result = await transferWithTimeout(epIn, 4096, 2500);
 
       if (result.data && result.data.byteLength > 0) {
-        // DataView-Offset respektieren (Chrome gibt heute ganzen Buffer, aber nicht garantiert)
         const chunk = new Uint8Array(
           result.data.buffer, result.data.byteOffset, result.data.byteLength
         );
@@ -597,7 +669,7 @@
             drawFrame(temps);
             buffer = buffer.slice(FRAME_BYTES);
           } else {
-            buffer = buffer.slice(1); // Sync verloren -> 1 Byte weiter
+            buffer = buffer.slice(1);
           }
         }
       }
